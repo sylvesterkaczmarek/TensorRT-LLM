@@ -126,10 +126,10 @@ def normalize_path(filepath: str, repo_root: Path) -> str:
     p = Path(filepath)
     if p.is_absolute():
         try:
-            return str(p.relative_to(repo_root))
+            return p.relative_to(repo_root).as_posix()
         except ValueError:
-            return str(p)
-    return str(p)
+            return p.as_posix()
+    return p.as_posix()
 
 
 def count_violations(violations: list[dict], repo_root: Path) -> dict[str, dict[str, int]]:
