@@ -1,0 +1,36 @@
+name: Review fixes validation
+
+on:
+  push:
+    branches:
+      - review-validation-20260910-05bdd76
+
+permissions:
+  contents: read
+
+jobs:
+  registry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the exact review commit
+        run: |
+          git clone --filter=blob:none --no-checkout https://github.com/sylvesterkaczmarek/TensorRT-LLM.git source
+          git -C source fetch --depth=1 origin 05bdd76c8ffb31ab691a50d36a57e740cc7d7bad
+          git -C source checkout --detach FETCH_HEAD
+      - name: Install CPU test and formatting tools
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install pre-commit pytest pyyaml
+      - name: Run registry tests
+        working-directory: source
+        run: ../.venv/bin/python -m pytest --noconftest -o addopts='' -q tests/unittest/scripts/test_check_model_registry.py
+      - name: Run repository pre-commit hooks
+        working-directory: source
+        run: ../.venv/bin/pre-commit run --files scripts/check_model_registry.py tests/unittest/scripts/test_check_model_registry.py
+      - name: Report formatter changes
+        if: always()
+        working-directory: source
+        run: |
+          git diff --check
+          git diff -- scripts/check_model_registry.py tests/unittest/scripts/test_check_model_registry.py
